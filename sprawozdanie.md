@@ -41,10 +41,10 @@ Vagrant pozwala na dostosowywanie (ang. provisioning) maszyn wirtualnych podczas
 System Ubuntu zawiera menedżer oprogramowania "apt", pozwalający na automatyczne zainstalowanie oprogramowania, jeżeli gospodarz jest połączony z internetem. Apt pozwala na zainstalowanie środowiska graficznego XFCE jednym zadaniem:
 
 ```Ruby
-config.vm.provision "shell", inline: "sudo apt-get update; sudo apt-get install xubuntu-core^ -y; shutdown -r now"
+config.vm.provision "shell", inline: "sudo apt-get update; sudo apt-get install xubuntu-core^ -y"
 ```
 
-Pierwsze polecenie aktualizuje listy pakietów, drugie - wykonuje zadanie apta instalujące środowisko graficzne. Opcja -y pomija wszystkie zapytania do użytkownika. Trzecia komenda uruchamia maszynę ponownie.
+Pierwsze polecenie aktualizuje listy pakietów, drugie - wykonuje zadanie apta instalujące środowisko graficzne. Opcja -y pomija wszystkie zapytania do użytkownika.
 
 Zadanie xubuntu-core pobiera tylko niezbędne minimum. Potrzebny jeszcze jest edytor tekstu i kompilator. Zdecydowano się na Atom - jest uniwersalny i łatwo go dostosować do potrzeb użytkownika. Ze strony twórców, https://atom.io/, pobrano pakiet .deb zawierający program i umieszczono go w folderze z plikiem Vagrantfile. Domyślnie wszystkie pliki i foldery dzielące folder z plikiem Vagrantfile trafiają do folderu współdzielonego ```/vagrant/``` w systemie gościa. Jeżeli chcemy umieścić plik w innym folderze, możemy zrobić to dodając do Vagrantfile'a poniższą linijkę:
 
@@ -63,7 +63,7 @@ sudo apt-get install -f
 sudo dpkg -i /home/vagrant/atom-amd64.deb
 ```
 
-Informacje o skrypcie - zapisanym jako install.sh - dodajemu do Vagrantifle'a w następujący sposób:
+Informacje o skrypcie - zapisanym jako ```install.sh``` - dodajemu do Vagrantifle'a w następujący sposób:
 
 ```Ruby
 config.vm.provision "shell", path: "install.sh"
@@ -77,7 +77,7 @@ Na sam koniec w jeden z powyższych sposobów można zainstalować kompilator pr
 config.vm.provision "shell", inline: "sudo apt-get install g++ -y"
 ```
 
- Po wszystkich procesach maszyna zostanie uruchomiona ponownie.
+Po wszystkich procesach maszyna zostanie uruchomiona ponownie.
 
 #### Efekt końcowy.
 
@@ -97,3 +97,5 @@ Vagrant.configure("2") do |config|
 end
 
 ```
+
+Treść pliku ```install.sh``` podano w całości powyżej. Najnowszą wersję pakietu atom-amd64.deb można pobrać z następującego adresu: https://github.com/atom/atom/releases/latest.
