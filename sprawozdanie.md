@@ -10,17 +10,17 @@ Celem tego projektu jest stworzenie przy użyciu Vagranta kompletnego środowisk
 
 Przed rozpoczęciem należy zainstalować Virtualbox i Vagranta. Oba programy są bezpłatne, i można pobrać je ze stron producentów. Vagrant pozwala na użycie innych programów wirtualizujących, ale domyślnie współpracuje z Virtualboxem.
 
-"Box", ang. "pudełko", to format pakietów używanych przez Vagranta do zarządzania środowiskami. Boxy są tworzone dla konkretnego programu wirtualizacyjnego (box dla QEMU zadziała tylko z QEMU), ale działają na każdym systemie obsługiwanym przez Vagranta. Hashicorp utrzymuje repozytorium z boksami stworzonymi przez użytkowników, dostępne pod adresem https://app.vagrantup.com/boxes/search. Można tam znaleźć stworzone przez Hashicorp boxy z wersjami systemu Ubuntu o przedłużonym okresie wsparcia (LTS). Aby zainstalować sam system, bez dodatków, wystarczy zmienić zawartość pliku Vagrantfile na:
+"Box", ang. "pudełko", to format pakietów używanych przez Vagranta do zarządzania środowiskami. Boxy są tworzone dla konkretnego programu wirtualizacyjnego (np. box dla QEMU zadziała tylko z QEMU), ale działają na każdym systemie obsługiwanym przez Vagranta. Hashicorp utrzymuje repozytorium z boksami stworzonymi przez użytkowników, dostępne pod adresem https://app.vagrantup.com/boxes/search. Można tam znaleźć stworzone przez Hashicorp boxy z wersjami systemu Ubuntu o przedłużonym okresie wsparcia (LTS). Aby zainstalować sam system, bez dodatków, wystarczy zmienić zawartość pliku Vagrantfile na:
 
 ```Ruby
 Vagrant.configure("2") do |config|
-  config.vm.box = "hashicorp/bionic64"
+  config.vm.box = "hashicorp/bionic64" # Ubuntu Bionic Beaver 18.04, wersja 64-bitowa
   config.vm.box_version = "1.0.282"
 end
 
 ```
 
-Aby stworzyć tą maszynę, po zapisaniu zawartości Vagrantfile'a wystarczy wykonać polecenie ```vagrant up``` w folderu w którym się on znajduje, albo w podfolderze tego folderu. Box zostanie automatycznie pobrany przy pierwszym uruchomieniu, i maszyna zostanie uruchomiona. Dane użytkownika: login "vagrant", hasło "vagrant". Domyślny użytkownik jest w stanie używać ```sudo``` bez podawania hasła - miej to na uwadze w dalszej części tekstu.
+Aby stworzyć tą maszynę, po zapisaniu zawartości Vagrantfile'a wystarczy wykonać polecenie ```vagrant up``` w folderu w którym się on znajduje, albo w podfolderze tego folderu. Box zostanie automatycznie pobrany przy pierwszym uruchomieniu, i maszyna zostanie uruchomiona. Parametry domyślnego konta: login "vagrant", hasło "vagrant". Domyślny użytkownik jest w stanie używać ```sudo``` bez podawania hasła - miej to na uwadze w dalszej części tekstu.
 
 #### Modyfikacje konfiguracji i wirtualizowanego sprzętu.
 
@@ -34,21 +34,11 @@ Domyślnie maszyny wirtualne tworzone przez Vagranta z pomocą Virtualboxa są u
 
 #### Instalacja oprogramowania przy pomocy provisions.
 
-Mając tak przygotowaną maszynę wirtualną, chcemy zainstalować na niej oprogramowanie z którego będziemy korzystać. Zacznijmy od instalacji środowiska graficznego - box z systemem pozwala tylko na pracę w trybie konsolowym, co dla niedoświadczonego użytkownika może być problemem.
+Sam goły system nie spełnia naszych oczekiwań, więc zautomatyzujmy również pobieranie oprogramowania jakie będzie nam potrzebne. Zacznijmy od instalacji środowiska graficznego - box z systemem pozwala tylko na pracę w trybie konsolowym, co dla niedoświadczonego użytkownika może być problemem.
 
-Vagrant pozwala na dostosowywanie (ang. provisioning) maszyn wirtualnych podczas ich tworzenia. Jedną z dostępnych opcji jest wykonywanie poleceń w powłoce, które można zrobić na dwa sposoby: bezpośrednio w skrypcie:
+Vagrant pozwala na dostosowywanie (ang. provisioning) maszyn wirtualnych podczas ich tworzenia. Jedną z dostępnych opcji jest wykonywanie poleceń w powłoce, które można zrobić na dwa sposoby: bezpośrednio w skrypcie ("inline"), lub wczytując skrypt z systemu gospodarza ("path"). Oba sposoby zostaną zaprezentowane w tym rozdziale.
 
-```Ruby
-config.vm.provision "shell", inline: "echo Polecenie do wykonania"
-```
-
-lub wczytując skrypt z systemu gospodarza
-
-```Ruby
-config.vm.provision "shell", file: "/ścieżka/do/pliku.sh"
-```
-
-W połączeniu z menedżerem oprogramowania "apt" dostępnym w systemie Ubuntu pozwala na automatyczne zainstalowanie oprogramowania, jeżeli gospodarz jest połączony z internetem. Apt pozwala na zainstalowanie środowiska graficznego XFCE jednym zadaniem, poleceniem przedstawionym poniżej:
+System Ubuntu zawiera menedżer oprogramowania "apt", pozwalający na automatyczne zainstalowanie oprogramowania, jeżeli gospodarz jest połączony z internetem. Apt pozwala na zainstalowanie środowiska graficznego XFCE jednym zadaniem:
 
 ```Ruby
 config.vm.provision "shell", inline: "sudo apt-get update; sudo apt-get install xubuntu-core^ -y; shutdown -r now"
@@ -56,30 +46,50 @@ config.vm.provision "shell", inline: "sudo apt-get update; sudo apt-get install 
 
 Pierwsze polecenie aktualizuje listy pakietów, drugie - wykonuje zadanie apta instalujące środowisko graficzne. Opcja -y pomija wszystkie zapytania do użytkownika. Trzecia komenda uruchamia maszynę ponownie.
 
-Po zainstalowaniu środowiska graficznego możemy zainstalować kompilator g++. Możemy to zrobić w ten sam sposób, ale można to też zrobić zewnętrznym skryptem. W tym samym folderze w którym znajduje się Vagrantfile utworzono prosty plik "install.sh":
-
-```bash
-#!/bin/bash
-sudo apt-get install g++ -y
-```
-
-Na sam koniec zainstalujmy edytor tekstu Atom. Ze strony autora, https://atom.io/, pobrano pakiet .deb zawierający program i umieszczono go w folderze z plikiem Vagrantfile. Domyślnie wszystkie pliki dzielące folder z plikiem Vagrantfile trafiają do folderu współdzielonego ```/vagrant/``` w systemie gościa. Jeżeli chcemy umieścić plik w innym folderze, możemy zrobić to przy pomocy provision:
+Zadanie xubuntu-core pobiera tylko niezbędne minimum. Potrzebny jeszcze jest edytor tekstu i kompilator. Zdecydowano się na Atom - jest uniwersalny i łatwo go dostosować do potrzeb użytkownika. Ze strony twórców, https://atom.io/, pobrano pakiet .deb zawierający program i umieszczono go w folderze z plikiem Vagrantfile. Domyślnie wszystkie pliki i foldery dzielące folder z plikiem Vagrantfile trafiają do folderu współdzielonego ```/vagrant/``` w systemie gościa. Jeżeli chcemy umieścić plik w innym folderze, możemy zrobić to dodając do Vagrantfile'a poniższą linijkę:
 
 ```Ruby
-config.vm.provision "file", source: "files/atom-amd64.deb", destination: "/home/vagrant/"
+config.vm.provision "file", source: "atom-amd64.deb", destination: "/home/vagrant/"
 ```
 
-"Source" to ścieżka do pliku na komputerze gospodarza, a "destination" to folder w systemie gościa, gdzie trafi nasz plik. Po umieszczeniu go w tym miejscu, należy go zainstalować i pobrać pakiety zależne. Możemy zrobić to przy pomocy już istniejącego skryptu "install.sh". Dodajmy do niego komendy automatuzyjące instalację:
+"Source" to lokalizacja pliku w systemie gospodarza - może być podana względem Vagrantfile'a, jak powyżej - a "destination" to folder w systemie gościa, gdzie zostanie on umieszczony.
+
+Po umieszczeniu pakietu na systemie gościa, należy go zainstalować. Jako że proces ten wymaga dociągnięcia paru zależności z repozytorium, najlepiej zrobić to osobnym skryptem:
 
 ```bash
 #!/bin/bash
-sudo apt-get install g++ -y
-
-sudo dpkg -i /home/vagrant/atom-amd64.deb >> /dev/null # nie uda się, ponieważ brakuje dependencji - błędy wysyłamy w kosmos
-sudo apt-get install -f # dodajemy dependencje
+sudo dpkg -i /home/vagrant/atom-amd64.deb >> /dev/null
+sudo apt-get install -f
 sudo dpkg -i /home/vagrant/atom-amd64.deb
+```
+
+Informacje o skrypcie - zapisanym jako install.sh - dodajemu do Vagrantifle'a w następujący sposób:
+
+```Ruby
+config.vm.provision "shell", path: "install.sh"
+```
+
+Pierwsze wywołanie dpkg nie zadziała, ponieważ brakuje zależności - spodziewano się tego, dlatego komunikaty o błędzie zostają wysłane do /dev/null. Problem ten zostanie naprawiony przez apt, więc druga instalacja powinna pójść bez problemu.
+
+Na sam koniec w jeden z powyższych sposobów można zainstalować kompilator preferowany przez użytkownika - w naszym wypadku będzie to g++, i zainstalujemy je poleceniem umieszczonym bezpośrednio w Vagrantfile'u.
+
+```Ruby
+config.vm.provision "shell", inline: "sudo apt-get install g++ -y"
 ```
 
 #### Efekt końcowy.
 
-Vagrantfile:
+Vagrantfile wygląda obecnie nastepująco:
+```Ruby
+Vagrant.configure("2") do |config|
+  config.vm.box = "hashicorp/bionic64"
+  config.vm.box_version = "1.0.282"
+  # config.vm.provider "virtualbox" do |providerConfig|
+  #   providerConfig.gui = true
+  # end
+  config.vm.provision "shell", inline: "sudo apt-get update; sudo apt-get install xubuntu-core^ -y"
+  config.vm.provision "file", source: "atom-amd64.deb", destination: "/home/vagrant/"
+  config.vm.provision "shell", path: "install.sh"
+  config.vm.provision "shell", inline: "sudo apt-get install g++ -y"
+end
+```
