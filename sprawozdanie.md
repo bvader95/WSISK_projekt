@@ -77,6 +77,8 @@ Na sam koniec w jeden z powyższych sposobów można zainstalować kompilator pr
 config.vm.provision "shell", inline: "sudo apt-get install g++ -y"
 ```
 
+ Po wszystkich procesach maszyna zostanie uruchomiona ponownie.
+
 #### Efekt końcowy.
 
 Vagrantfile wygląda obecnie nastepująco:
@@ -84,12 +86,14 @@ Vagrantfile wygląda obecnie nastepująco:
 Vagrant.configure("2") do |config|
   config.vm.box = "hashicorp/bionic64"
   config.vm.box_version = "1.0.282"
-  # config.vm.provider "virtualbox" do |providerConfig|
-  #   providerConfig.gui = true
-  # end
+  config.vm.provider "virtualbox" do |providerConfig|
+    providerConfig.gui = true
+  end
   config.vm.provision "shell", inline: "sudo apt-get update; sudo apt-get install xubuntu-core^ -y"
   config.vm.provision "file", source: "atom-amd64.deb", destination: "/home/vagrant/"
   config.vm.provision "shell", path: "install.sh"
   config.vm.provision "shell", inline: "sudo apt-get install g++ -y"
+  config.vm.provision "shell", inline: "sudo shutdown -r now"
 end
+
 ```
